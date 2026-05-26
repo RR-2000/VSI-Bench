@@ -56,15 +56,15 @@ configs:
       - split: test
         path: "test_room_size_estimation.parquet"
   - config_name: bbox_object_counting
-    datafiles:
+    data_files:
       - split: bbox
         path: "bbox_object_counting.parquet"
   - config_name: bbox_object_appearance_order
-    datafiles:
+    data_files:
       - split: bbox
         path: "bbox_object_appearance_order.parquet"
   - config_name: bbox_object_size_estimation
-    datafiles:
+    data_files:
       - split: bbox
         path: "bbox_object_size_estimation.parquet"
 ---

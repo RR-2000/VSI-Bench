@@ -19,6 +19,7 @@ Create parquet files for config subsets of the VSI-Bench dataset.
 
 import pandas as pd
 from pathlib import Path
+import os
 
 script_dir = Path(__file__).parent
 pruned_ids_path = script_dir / "pruned_ids.txt"
@@ -119,6 +120,12 @@ if bbox_ordering_jsonl_path.exists():
     print(f"Loading bbox object appearance order data from '{bbox_ordering_jsonl_path}'...")
     df_bbox_ordering = pd.read_json(str(bbox_ordering_jsonl_path), lines=True)
     print(f"    -> Loaded {len(df_bbox_ordering)} examples.")
+    def prune_bbox_ordering(row):
+        path_to_test = os.path.join(row["dataset"], row['scene_name'])
+        if os.path.exists(f'{path_to_test}.mp4') and os.path.isdir(path_to_test) and len(os.listdir(path_to_test)) == 4:
+            return True
+        return False
+    df_bbox_ordering = df_bbox_ordering[df_bbox_ordering.apply(prune_bbox_ordering, axis=1)]
     print(f"Saving bbox object appearance order examples to '{pq_bbox_object_appearance_order_path}'...")
     df_bbox_ordering.to_parquet(pq_bbox_object_appearance_order_path, index=False)
     print(f"    -> Saved {len(df_bbox_ordering)} bbox object appearance order examples.")
@@ -128,6 +135,12 @@ if bbox_object_counting_jsonl_path.exists():
     print(f"Loading bbox object counting data from '{bbox_object_counting_jsonl_path}'...")
     df_bbox_object_counting = pd.read_json(str(bbox_object_counting_jsonl_path), lines=True)
     print(f"    -> Loaded {len(df_bbox_object_counting)} examples.")
+    def prune_bbox_counting(row):
+        path_to_test = os.path.join(row["dataset"], row['scene_name'])
+        if os.path.exists(f'{path_to_test}.mp4') and os.path.isdir(path_to_test) and len(os.listdir(path_to_test)) == 1:
+            return True
+        return False
+    df_bbox_object_counting = df_bbox_object_counting[df_bbox_object_counting.apply(prune_bbox_counting, axis=1)]
     print(f"Saving bbox object counting examples to '{pq_bbox_object_counting_path}'...")
     df_bbox_object_counting.to_parquet(pq_bbox_object_counting_path, index=False)
     print(f"    -> Saved {len(df_bbox_object_counting)} bbox object counting examples.")
@@ -138,6 +151,12 @@ if bbox_object_size_estimation_jsonl_path.exists():
     print(f"Loading bbox object size estimation data from '{bbox_object_size_estimation_jsonl_path}'...")
     df_bbox_object_size_estimation = pd.read_json(str(bbox_object_size_estimation_jsonl_path), lines=True)
     print(f"    -> Loaded {len(df_bbox_object_size_estimation)} examples.")
+    def prune_bbox_size_estimation(row):
+        path_to_test = os.path.join(row["dataset"], row['scene_name'])
+        if os.path.exists(f'{path_to_test}.mp4') and os.path.isdir(path_to_test) and len(os.listdir(path_to_test)) == 1:
+            return True
+        return False
+    df_bbox_object_size_estimation = df_bbox_object_size_estimation[df_bbox_object_size_estimation.apply(prune_bbox_size_estimation, axis=1)]
     print(f"Saving bbox object size estimation examples to '{pq_bbox_object_size_estimation_path}'...")
     df_bbox_object_size_estimation.to_parquet(pq_bbox_object_size_estimation_path, index=False)
     print(f"    -> Saved {len(df_bbox_object_size_estimation)} bbox object size estimation examples.")
