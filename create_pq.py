@@ -17,9 +17,15 @@ Create parquet files for config subsets of the VSI-Bench dataset.
 > If you do not pass `index=False`, the parquet files will have a `__index_level_0__` column
 """
 
-import pandas as pd
-from pathlib import Path
+import glob
 import os
+from pathlib import Path
+
+import cv2
+import pandas as pd
+from tqdm import tqdm
+
+GEN_MP4 = False  # Set to True if you want to generate mp4 files for the bbox examples (requires ffmpeg and a lot of disk space)
 
 script_dir = Path(__file__).parent
 pruned_ids_path = script_dir / "pruned_ids.txt"
@@ -43,6 +49,10 @@ pq_object_rel_direction_easy_path = script_dir / "test_object_rel_direction_easy
 pq_bbox_object_appearance_order_path = script_dir / "bbox_object_appearance_order.parquet"
 pq_bbox_object_counting_path = script_dir / "bbox_object_counting.parquet"
 pq_bbox_object_size_estimation_path = script_dir / "bbox_object_size_estimation.parquet"
+
+pq_baseline_bbox_object_appearance_order_path = script_dir / "baseline_bbox_object_appearance_order.parquet"
+pq_baseline_bbox_object_counting_path = script_dir / "baseline_bbox_object_counting.parquet"
+pq_baseline_bbox_object_size_estimation_path = script_dir / "baseline_bbox_object_size_estimation.parquet"
 
 print("Creating parquet files...")
 
@@ -160,5 +170,65 @@ if bbox_object_size_estimation_jsonl_path.exists():
     print(f"Saving bbox object size estimation examples to '{pq_bbox_object_size_estimation_path}'...")
     df_bbox_object_size_estimation.to_parquet(pq_bbox_object_size_estimation_path, index=False)
     print(f"    -> Saved {len(df_bbox_object_size_estimation)} bbox object size estimation examples.")
+
+
+suffix = '_frames_24'
+datatsets = ['scannet', 'scannetpp', 'arkitscenes']
+if GEN_MP4:
+    for dataset in datatsets:
+        dataset_path = script_dir / f"{dataset}{suffix}"
+        saveset_path = script_dir / f"{dataset}{suffix}_mp4"
+        saveset_path.mkdir(exist_ok=True)
+        for scene in tqdm(os.listdir(dataset_path), desc=f"Processing scenes in {dataset}"):
+            scene_path = dataset_path / scene
+            if os.path.isdir(scene_path):
+                output_path = saveset_path / f"{scene}.mp4"
+                if not output_path.exists():
+                    jpg_paths = sorted(glob.glob(str(scene_path / "*.png")))
+                    if not jpg_paths:
+                        continue
+                    first_frame = cv2.imread(jpg_paths[0])
+                    if first_frame is None:
+                        continue
+                    height, width = first_frame.shape[:2]
+                    writer = cv2.VideoWriter(
+                        str(output_path),
+                        cv2.VideoWriter_fourcc(*"mp4v"),
+                        12,
+                        (width, height),
+                    )
+                    if not writer.isOpened():
+                        raise RuntimeError(f"Failed to open VideoWriter for {output_path}")
+                    print(f"Generating mp4 for {scene}...")
+                    for jpg_path in jpg_paths:
+                        frame = cv2.imread(jpg_path)
+                        if frame is None:
+                            continue
+                        if frame.shape[1] != width or frame.shape[0] != height:
+                            frame = cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
+                        writer.write(frame)
+                    writer.release()
+
+# Save BBox compliant frames without BBoxes
+# Order
+df_bbox_ordering['dataset'] = df_bbox_ordering['dataset'].apply(lambda x: f"{x.split('/')[-1]}{suffix}_mp4")
+df_bbox_ordering['scene_name'] = df_bbox_ordering['scene_name'].apply(lambda x: f"{'_'.join(x.split('_')[:-1])}")
+print(f"Saving bbox object appearance order examples to '{pq_baseline_bbox_object_appearance_order_path}'...")
+df_bbox_ordering.to_parquet(pq_baseline_bbox_object_appearance_order_path, index=False)
+print(f"    -> Saved {len(df_bbox_ordering)} bbox object appearance order examples.")
+
+# Counting
+df_bbox_object_counting['dataset'] = df_bbox_object_counting['dataset'].apply(lambda x: f"{x.split('/')[-1]}{suffix}_mp4")
+df_bbox_object_counting['scene_name'] = df_bbox_object_counting['scene_name'].apply(lambda x: f"{'_'.join(x.split('_')[:-1])}")
+print(f"Saving bbox object counting examples to '{pq_baseline_bbox_object_counting_path}'...")
+df_bbox_object_counting.to_parquet(pq_baseline_bbox_object_counting_path, index=False)
+print(f"    -> Saved {len(df_bbox_object_counting)} bbox object counting examples.")
+
+# Size Estimation
+df_bbox_object_size_estimation['dataset'] = df_bbox_object_size_estimation['dataset'].apply(lambda x: f"{x.split('/')[-1]}{suffix}_mp4")
+df_bbox_object_size_estimation['scene_name'] = df_bbox_object_size_estimation['scene_name'].apply(lambda x: f"{'_'.join(x.split('_')[:-1])}")
+print(f"Saving bbox object size estimation examples to '{pq_baseline_bbox_object_size_estimation_path}'...")
+df_bbox_object_size_estimation.to_parquet(pq_baseline_bbox_object_size_estimation_path, index=False)
+print(f"    -> Saved {len(df_bbox_object_size_estimation)} bbox object size estimation examples.")
 
 print("Done.") 

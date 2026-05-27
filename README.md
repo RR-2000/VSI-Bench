@@ -67,6 +67,18 @@ configs:
     data_files:
       - split: bbox
         path: "bbox_object_size_estimation.parquet"
+  - config_name: baseline_bbox_object_counting
+    data_files:
+      - split: bbox
+        path: "baseline_bbox_object_counting.parquet"
+  - config_name: baseline_bbox_object_appearance_order
+    data_files:
+      - split: bbox
+        path: "baseline_bbox_object_appearance_order.parquet"
+  - config_name: baseline_bbox_object_size_estimation
+    data_files:
+      - split: bbox
+        path: "baseline_bbox_object_size_estimation.parquet"
 ---
 
 <!-- <div align="center"> -->
