@@ -55,6 +55,8 @@ configs:
     data_files:
       - split: test
         path: "test_room_size_estimation.parquet"
+      
+
   - config_name: bbox_object_counting
     data_files:
       - split: bbox
@@ -67,6 +69,20 @@ configs:
     data_files:
       - split: bbox
         path: "bbox_object_size_estimation.parquet"
+  - config_name: bbox_object_rel_direction_hard
+    data_files:
+      - split: bbox
+        path: "bbox_object_rel_direction_hard.parquet"
+  - config_name: bbox_object_abs_distance
+    data_files:
+      - split: bbox
+        path: "bbox_object_abs_distance.parquet"
+  - config_name: bbox_route_planning
+    data_files:
+      - split: bbox
+        path: "bbox_route_planning.parquet"
+
+
   - config_name: baseline_bbox_object_counting
     data_files:
       - split: bbox
@@ -79,6 +95,18 @@ configs:
     data_files:
       - split: bbox
         path: "baseline_bbox_object_size_estimation.parquet"
+  - config_name: baseline_bbox_object_rel_direction_hard
+    data_files:
+      - split: bbox
+        path: "baseline_bbox_object_rel_direction_hard.parquet"
+  - config_name: baseline_bbox_object_abs_distance
+    data_files:
+      - split: bbox
+        path: "baseline_bbox_object_abs_distance.parquet"
+  - config_name: baseline_bbox_route_planning
+    data_files:
+      - split: bbox
+        path: "baseline_bbox_route_planning.parquet"
 ---
 
 <!-- <div align="center"> -->

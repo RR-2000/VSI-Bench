@@ -31,10 +31,16 @@ script_dir = Path(__file__).parent
 pruned_ids_path = script_dir / "pruned_ids.txt"
 test_jsonl_path = script_dir / "test.jsonl"
 
+# BBox Jsonl paths
 bbox_ordering_jsonl_path = script_dir / "bbox_obj_appearance_order.jsonl"
 bbox_object_counting_jsonl_path = script_dir / "bbox_object_counting.jsonl"
 bbox_object_size_estimation_jsonl_path = script_dir / "bbox_object_size_estimation.jsonl"
+bbox_object_rel_direction_hard_jsonl_path = script_dir / "bbox_object_rel_direction_hard.jsonl"
+bbox_object_abs_distance_jsonl_path = script_dir / "bbox_object_abs_distance.jsonl"
+bbox_route_planning_jsonl_path = script_dir / "bbox_route_planning.jsonl"
 
+
+# Output parquet paths
 pq_debiased_path = script_dir / "test_debiased.parquet"
 pq_pruned_path = script_dir / "test_pruned.parquet"
 pq_object_counting_path = script_dir / "test_object_counting.parquet"
@@ -46,13 +52,21 @@ pq_object_rel_direction_hard_path = script_dir / "test_object_rel_direction_hard
 pq_object_rel_direction_medium_path = script_dir / "test_object_rel_direction_medium.parquet"
 pq_object_rel_direction_easy_path = script_dir / "test_object_rel_direction_easy.parquet"
 
+# Output parquet paths for BBoxes PQs
 pq_bbox_object_appearance_order_path = script_dir / "bbox_object_appearance_order.parquet"
 pq_bbox_object_counting_path = script_dir / "bbox_object_counting.parquet"
 pq_bbox_object_size_estimation_path = script_dir / "bbox_object_size_estimation.parquet"
+pq_bbox_object_rel_direction_hard_path = script_dir / "bbox_object_rel_direction_hard.parquet"
+pq_bbox_object_abs_distance_path = script_dir / "bbox_object_abs_distance.parquet"
+pq_bbox_route_planning_path = script_dir / "bbox_route_planning.parquet"
 
+# Output parquet paths for BBoxes PQs compliant with the baseline (i.e. with mp4 paths instead of png folders)
 pq_baseline_bbox_object_appearance_order_path = script_dir / "baseline_bbox_object_appearance_order.parquet"
 pq_baseline_bbox_object_counting_path = script_dir / "baseline_bbox_object_counting.parquet"
 pq_baseline_bbox_object_size_estimation_path = script_dir / "baseline_bbox_object_size_estimation.parquet"
+pq_baseline_bbox_object_rel_direction_hard_path = script_dir / "baseline_bbox_object_rel_direction_hard.parquet"
+pq_baseline_bbox_object_abs_distance_path = script_dir / "baseline_bbox_object_abs_distance.parquet"
+pq_baseline_bbox_route_planning_path = script_dir / "baseline_bbox_route_planning.parquet"
 
 print("Creating parquet files...")
 
@@ -171,8 +185,53 @@ if bbox_object_size_estimation_jsonl_path.exists():
     df_bbox_object_size_estimation.to_parquet(pq_bbox_object_size_estimation_path, index=False)
     print(f"    -> Saved {len(df_bbox_object_size_estimation)} bbox object size estimation examples.")
 
+# Custom clip for bbox relative direction hard examples
+if bbox_object_rel_direction_hard_jsonl_path.exists():
+    print(f"Loading bbox object relative direction hard data from '{bbox_object_rel_direction_hard_jsonl_path}'...")
+    df_bbox_object_rel_direction_hard = pd.read_json(str(bbox_object_rel_direction_hard_jsonl_path), lines=True)
+    print(f"    -> Loaded {len(df_bbox_object_rel_direction_hard)} examples.")
+    def prune_bbox_rel_direction_hard(row):
+        path_to_test = os.path.join(row["dataset"], row['scene_name'])
+        if os.path.exists(f'{path_to_test}.mp4') and os.path.isdir(path_to_test) and len(os.listdir(path_to_test)) > 0:
+            return True
+        return False
+    df_bbox_object_rel_direction_hard = df_bbox_object_rel_direction_hard[df_bbox_object_rel_direction_hard.apply(prune_bbox_rel_direction_hard, axis=1)]
+    print(f"Saving bbox object relative direction hard examples to '{pq_bbox_object_rel_direction_hard_path}'...")
+    df_bbox_object_rel_direction_hard.to_parquet(pq_bbox_object_rel_direction_hard_path, index=False)
+    print(f"    -> Saved {len(df_bbox_object_rel_direction_hard)} bbox object relative direction hard examples.")
 
-suffix = '_frames_24'
+# Custom clip for bbox absolute distance examples
+if bbox_object_abs_distance_jsonl_path.exists():
+    print(f"Loading bbox object absolute distance data from '{bbox_object_abs_distance_jsonl_path}'...")
+    df_bbox_object_abs_distance = pd.read_json(str(bbox_object_abs_distance_jsonl_path), lines=True)
+    print(f"    -> Loaded {len(df_bbox_object_abs_distance)} examples.")
+    def prune_bbox_abs_distance(row):
+        path_to_test = os.path.join(row["dataset"], row['scene_name'])
+        if os.path.exists(f'{path_to_test}.mp4') and os.path.isdir(path_to_test) and len(os.listdir(path_to_test)) > 0:
+            return True
+        return False
+    df_bbox_object_abs_distance = df_bbox_object_abs_distance[df_bbox_object_abs_distance.apply(prune_bbox_abs_distance, axis=1)]
+    print(f"Saving bbox object absolute distance examples to '{pq_bbox_object_abs_distance_path}'...")
+    df_bbox_object_abs_distance.to_parquet(pq_bbox_object_abs_distance_path, index=False)
+    print(f"    -> Saved {len(df_bbox_object_abs_distance)} bbox object absolute distance examples.")
+
+# Custom clip for bbox route planning examples
+if bbox_route_planning_jsonl_path.exists():
+    print(f"Loading bbox route planning data from '{bbox_route_planning_jsonl_path}'...")
+    df_bbox_route_planning = pd.read_json(str(bbox_route_planning_jsonl_path), lines=True)
+    print(f"    -> Loaded {len(df_bbox_route_planning)} examples.")
+    def prune_bbox_route_planning(row):
+        path_to_test = os.path.join(row["dataset"], row['scene_name'])
+        if os.path.exists(f'{path_to_test}.mp4') and os.path.isdir(path_to_test) and len(os.listdir(path_to_test)) > 0:
+            return True
+        return False
+    df_bbox_route_planning = df_bbox_route_planning[df_bbox_route_planning.apply(prune_bbox_route_planning, axis=1)]
+    print(f"Saving bbox route planning examples to '{pq_bbox_route_planning_path}'...")
+    df_bbox_route_planning.to_parquet(pq_bbox_route_planning_path, index=False)
+    print(f"    -> Saved {len(df_bbox_route_planning)} bbox route planning examples.")
+
+
+suffix = '_frames_6'
 datatsets = ['scannet', 'scannetpp', 'arkitscenes']
 if GEN_MP4:
     for dataset in datatsets:
@@ -230,5 +289,26 @@ df_bbox_object_size_estimation['scene_name'] = df_bbox_object_size_estimation['s
 print(f"Saving bbox object size estimation examples to '{pq_baseline_bbox_object_size_estimation_path}'...")
 df_bbox_object_size_estimation.to_parquet(pq_baseline_bbox_object_size_estimation_path, index=False)
 print(f"    -> Saved {len(df_bbox_object_size_estimation)} bbox object size estimation examples.")
+
+# Relative Direction Hard
+df_bbox_object_rel_direction_hard['dataset'] = df_bbox_object_rel_direction_hard['dataset'].apply(lambda x: f"{x.split('/')[-1]}{suffix}_mp4")
+df_bbox_object_rel_direction_hard['scene_name'] = df_bbox_object_rel_direction_hard['scene_name'].apply(lambda x: f"{'_'.join(x.split('_')[:-1])}")
+print(f"Saving bbox object relative direction hard examples to '{pq_baseline_bbox_object_rel_direction_hard_path}'...")
+df_bbox_object_rel_direction_hard.to_parquet(pq_baseline_bbox_object_rel_direction_hard_path, index=False)
+print(f"    -> Saved {len(df_bbox_object_rel_direction_hard)} bbox object relative direction hard examples.")
+
+# Absolute Distance
+df_bbox_object_abs_distance['dataset'] = df_bbox_object_abs_distance['dataset'].apply(lambda x: f"{x.split('/')[-1]}{suffix}_mp4")
+df_bbox_object_abs_distance['scene_name'] = df_bbox_object_abs_distance['scene_name'].apply(lambda x: f"{'_'.join(x.split('_')[:-1])}")
+print(f"Saving bbox object absolute distance examples to '{pq_baseline_bbox_object_abs_distance_path}'...")
+df_bbox_object_abs_distance.to_parquet(pq_baseline_bbox_object_abs_distance_path, index=False)
+print(f"    -> Saved {len(df_bbox_object_abs_distance)} bbox object absolute distance examples.")
+
+# Route Planning
+df_bbox_route_planning['dataset'] = df_bbox_route_planning['dataset'].apply(lambda x: f"{x.split('/')[-1]}{suffix}_mp4")
+df_bbox_route_planning['scene_name'] = df_bbox_route_planning['scene_name'].apply(lambda x: f"{'_'.join(x.split('_')[:-1])}")
+print(f"Saving bbox route planning examples to '{pq_baseline_bbox_route_planning_path}'...")
+df_bbox_route_planning.to_parquet(pq_baseline_bbox_route_planning_path, index=False)
+print(f"    -> Saved {len(df_bbox_route_planning)} bbox route planning examples.")
 
 print("Done.") 
